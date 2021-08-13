@@ -1,3 +1,17 @@
+variable "server_port" {
+  description = "The port used for HTTP"
+  type = number
+  default = 8080
+  
+}
+
+variable "ssh_port"{
+  description = "Open up SSH on the web server"
+  type = number
+  default = 22
+  
+}
+
 provider "aws" {
     region = "us-west-1"
   
@@ -9,8 +23,8 @@ resource "aws_instance" "example" {
 
     user_data = <<-EOF
                 #!/bin/bash
-                echo "Hello, World. Love you Nina" > index.html
-                nohup busybox httpd -f -p 8080 &
+                echo "Hello, World. Love you Nina." > index.html
+                nohup busybox httpd -f -p ${var.server_port} &
                 EOF
 
 
@@ -22,9 +36,19 @@ resource "aws_security_group" "instance" {
   name = "teraform-example-instance"
 
   ingress {
-    from_port   = 8080
-    to_port     = 8080
+    from_port   = var.server_port
+    to_port     = var.server_port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  ingress {
+    from_port = var.ssh_port
+    to_port   = var.ssh_port
+    protocol  = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+output "public_ip" {
+  value         = aws_instance.example.public_ip
+  description   = "The public IP address of the web server"
 }
